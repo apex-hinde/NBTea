@@ -1,3 +1,0 @@
--module(NBTea).
-
--export([]).
