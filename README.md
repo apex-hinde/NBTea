@@ -1,2 +1,9 @@
-# NBTea
-an erlang NBT decoder/ encoder
+NBTea
+=====
+
+An OTP library
+
+Build
+-----
+
+    $ rebar3 compile
