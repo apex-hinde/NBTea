@@ -3,7 +3,11 @@ NBTea
 
 An OTP library
 
-Build
+API
 -----
+    to decode an nbt use
+    decode:decode_nbt(Data)
 
-    $ rebar3 compile
+    to encode an nbt use 
+    encode:encode_nbt(Data)
+

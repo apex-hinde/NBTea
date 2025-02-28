@@ -1,5 +1,5 @@
 -module(decode).
--export([decode_nbt/2, test/0]).
+-export([decode_nbt/1, test/0]).
 -define(TAG_END, 0).
 -define(TAG_BYTE, 1).
 -define(TAG_SHORT, 2).
@@ -14,6 +14,8 @@
 -define(TAG_INT_ARRAY, 11).
 -define(TAG_LONG_ARRAY, 12).
 
+decode_nbt(Data) ->
+    decode_nbt(Data, []).
 decode_nbt(<<>>, Acc) ->
     Acc;
 
@@ -89,7 +91,7 @@ decode_string(Data, Acc) ->
 decode_list(Data, Acc) ->
     {Name, Data2} = get_nbt_name(Data),
     <<Type:8, Length:32, Data3/binary>> = Data2,
-    {Data4, Result} = decode_list_recursive(Type, Data3, [], Length),
+    {Data4, Result} = list(Type, Data3, [], Length),
     decode_nbt(Data4, [{tag_list, Name, Result}|Acc]).
 
 
@@ -123,10 +125,10 @@ long_array(Data, Acc, I) ->
 
 
 
-decode_list_recursive(_Type, Data, Acc, 0) ->
+list(_Type, Data, Acc, 0) ->
     {Data, lists:reverse(Acc)};
 
-decode_list_recursive(Type, Data, Acc, I) ->
+list(Type, Data, Acc, I) ->
     
     case Type of
         ?TAG_END ->
@@ -160,44 +162,44 @@ decode_list_recursive(Type, Data, Acc, I) ->
 
 decode_byte_list(Type, Data2, Acc, I) ->
     <<Byte:8, Data3/binary>> = Data2,
-    decode_list_recursive(Type, Data3, [{tag_byte, Byte}|Acc], I-1).
+    list(Type, Data3, [{tag_byte, Byte}|Acc], I-1).
 decode_short_list(Type, Data2, Acc, I) ->
     <<Short:16, Data3/binary>> = Data2,
-    decode_list_recursive(Type, Data3, [{tag_short, Short}|Acc], I-1).
+    list(Type, Data3, [{tag_short, Short}|Acc], I-1).
 decode_int_list(Type, Data2, Acc, I) ->
     <<Int:32, Data3/binary>> = Data2,
-    decode_list_recursive(Type, Data3, [{tag_int, Int}|Acc], I-1).
+    list(Type, Data3, [{tag_int, Int}|Acc], I-1).
 decode_long_list(Type, Data2, Acc, I) ->
     <<Long:64, Data3/binary>> = Data2,
-    decode_list_recursive(Type, Data3, [{tag_long, Long}|Acc], I-1).
+    list(Type, Data3, [{tag_long, Long}|Acc], I-1).
 decode_float_list(Type, Data2, Acc, I) ->
     <<Float:32/float, Data3/binary>> = Data2,
-    decode_list_recursive(Type, Data3, [{tag_long, Float}|Acc], I-1).
+    list(Type, Data3, [{tag_long, Float}|Acc], I-1).
 decode_double_list(Type, Data2, Acc, I) ->
     <<Double:64/float, Data3/binary>> = Data2,
-    decode_list_recursive(Type, Data3, [{tag_double, Double}|Acc], I-1).
+    list(Type, Data3, [{tag_double, Double}|Acc], I-1).
 
 decode_byte_array_list(Type, Data2, Acc, I) ->
     <<Length:32, Data3/binary>> = Data2,
     <<Byte_array:Length/binary, Data4/binary>> = Data3,
-    decode_list_recursive(Type, Data4, [{tag_byte_array, Byte_array}|Acc], I-1).
+    list(Type, Data4, [{tag_byte_array, Byte_array}|Acc], I-1).
 decode_string_list(Type, Data2, Acc, I) ->
     <<Length_of_string:16, Data3/binary>> = Data2,
     <<String:Length_of_string/binary, Data4/binary>> = Data3,
-    decode_list_recursive(Type, Data4, [{tag_string, String}|Acc], I-1).
+    list(Type, Data4, [{tag_string, String}|Acc], I-1).
 decode_list_list(Type, Data2, Acc, _I) ->
     <<Type:8, Length:32, Data3/binary>> = Data2,
-    {Result, Data4} = decode_list_recursive(Type, Data3, Acc, Length),
+    {Result, Data4} = list(Type, Data3, Acc, Length),
     decode_nbt(Data4, [{tag_list, Result}|Acc]).
 decode_compound_list(Type, Data2, Acc, I) ->
     {Rest, Result} = decode_nbt(Data2, []),
-    decode_list_recursive(Type, Rest, [{tag_compound, Result}|Acc], I-1).
+    list(Type, Rest, [{tag_compound, Result}|Acc], I-1).
 
 
 decode_int_array_list(Type, Data2, Acc, I) ->
     <<Length:32, Data3/binary>> = Data2,
     {Data4, Int_array} = int_array_list(Data3, [], Length),
-    decode_list_recursive(Data4, Type, [{tag_int_array, Int_array}|Acc], I-1).
+    list(Data4, Type, [{tag_int_array, Int_array}|Acc], I-1).
 int_array_list(Data, Acc, 0) ->
     {Data, lists:reverse(Acc)};
 
@@ -208,7 +210,7 @@ int_array_list(Data, Acc, I) ->
 decode_long_array_list(Type, Data2, Acc, I) ->
     <<Length:32, Data3/binary>> = Data2,
     {Data4, Long_array} = long_array_list(Data3, [], Length),
-    decode_list_recursive(Data4, Type, [{tag_int_array, Long_array}|Acc], I-1).
+    list(Data4, Type, [{tag_int_array, Long_array}|Acc], I-1).
 
 long_array_list(Data, Acc, 0) ->
     {Data, lists:reverse(Acc)};
